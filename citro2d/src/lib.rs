@@ -203,6 +203,34 @@ impl Frame {
         let mut scene = Scene;
         f(&mut scene);
     }
+
+    /// Begins drawing to the given render target.
+    /// Unlike scene, this doesn't clear the target with a color beforehand.
+    /// Sets it as active before calling the closure
+    /// All draw calls inside the closure go to this target.
+    pub fn scene_no_clear<F: FnOnce(&mut Scene)>(&mut self, target: &RenderTarget, f: F) {
+        unsafe {
+            C2D_SceneBegin(target.ptr);
+        }
+        let mut scene = Scene;
+        f(&mut scene);
+    }
+
+    /// Begins drawing to the given render target.
+    /// If `clear_color` is Some, this clears the target with that color and sets it as active before calling the closure.
+    /// Sets it as active before calling the closure
+    /// All draw calls inside the closure go to this target.
+    pub fn scene_maybe_clear<F: FnOnce(&mut Scene)>(
+        &mut self,
+        target: &RenderTarget,
+        maybe_clear_color: Option<Color>,
+        f: F,
+    ) {
+        match maybe_clear_color {
+            Some(clear_color) => self.scene(target, clear_color, f),
+            None => self.scene_no_clear(target, f),
+        }
+    }
 }
 
 impl Scene {
